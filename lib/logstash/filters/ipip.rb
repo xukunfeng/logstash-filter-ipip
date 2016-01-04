@@ -2,44 +2,41 @@
 require "logstash/filters/base"
 require "logstash/namespace"
 
-
 module SeventeenMon
-  class IPDBX
-  
-    private_class_method :new
-  
-    def ip_db_path
-      @ip_db_path ||= File.expand_path'../../../../vender/ipip.datx', __FILE__
-    end
-  
-    def ip_db
-      @ip_db ||= File.open ip_db_path, 'rb'
-    end
-  
-    def offset
-      @offset ||= ip_db.read(4).unpack("Nlen")[0]
-    end
-  
-    def index
-      @index ||= ip_db.read(offset - 4)
-    end
-  
-    def max_comp_length
-      @max_comp_length ||= offset - 262144 - 4
-    end
-  
-    def self.instance
-      @instance ||= self.send :new
-    end
-  
-    def seek(_offset, length)
-      IO.read(ip_db_path, length, offset + _offset - 262144).split "\t"
-    end
-  end
-  
-  class IP
+	class IPDB
+
+	    private_class_method :new
+
+	    def ip_db_path
+	      @ip_db_path ||= File.expand_path'../data/17monipdb.dat', __FILE__
+	    end
+	    def ip_db
+	      @ip_db ||= File.open ip_db_path, 'rb'
+	    end
+
+	    def offset
+	      @offset ||= ip_db.read(4).unpack("Nlen")[0]
+	    end
+
+	    def index
+	      @index ||= ip_db.read(offset - 4)
+	    end
+
+	    def max_comp_length
+	      @max_comp_length ||= offset - 1028
+	    end
+
+	    def self.instance
+	      @instance ||= self.send :new
+	    end
+
+	    def seek(_offset, length)
+	      IO.read(ip_db_path, length, offset + _offset - 1024).split "\t"
+	    end
+	  end
+ class IP
     attr_reader :ip
-  
+
     # Initialize IP object
     #
     # == parameters:
@@ -53,7 +50,7 @@ module SeventeenMon
       @ip = params[:ip] ||
         Socket.getaddrinfo(params[:address], params[:protocol])[0][3]
     end
-  
+
     def four_number
       @four_number ||= begin
         fn = ip.split(".").map(&:to_i)
@@ -61,44 +58,44 @@ module SeventeenMon
         fn
       end
     end
-  
+
     def ip2long
       @ip2long ||= ::IPAddr.new(ip).to_i
     end
-  
+
     def packed_ip
       @packed_ip ||= [ ip2long ].pack 'N'
     end
-  
+
     def find
-      tmp_offset = (four_number[0] * 256 + four_number[1]) * 4
-      start = IPDBX.instance.index[tmp_offset..(tmp_offset + 3)].unpack("V")[0] * 9 + 262144
-  
-      index_offset = -1
-  
-      while start < IPDBX.instance.max_comp_length
-        if IPDBX.instance.index[start..(start + 3)] >= packed_ip
-          index_offset = "#{IPDBX.instance.index[(start + 4)..(start + 6)]}\x0".unpack("V")[0]
-          index_length = IPDBX.instance.index[(start + 8)].unpack("C")[0]
+      tmp_offset = four_number[0] * 4
+      start = IPDB.instance.index[tmp_offset..(tmp_offset + 3)].unpack("V")[0] * 8 + 1024
+
+      index_offset = nil
+
+      while start < IPDB.instance.max_comp_length
+        if IPDB.instance.index[start..(start + 3)] >= packed_ip
+          index_offset = "#{IPDB.instance.index[(start + 4)..(start + 6)]}\x0".unpack("V")[0]
+          index_length = IPDB.instance.index[(start + 7)].unpack("C")[0]
           break
         end
-        start += 9
+        start += 8
       end
-  
+
       return "N/A" unless index_offset
-  
-      result = IPDBX.instance.seek(index_offset, index_length).map do |str|
+
+      result = IPDB.instance.seek(index_offset, index_length).map do |str|
         str.encode("UTF-8", "UTF-8")
       end
-  
-    {
-      country: result[0],
-      province: result[1],
-      city: result[2],
-      carrier: result[4]
-    }
+
+      {
+        country: result[0],
+        province: result[1],
+        city: result[2]
+      }
     end
   end
+
 end
 
 module SeventeenMon
@@ -107,6 +104,11 @@ module SeventeenMon
 
   def self.find_by_ip(_ip)
     IP.new(ip: _ip).find
+  end
+
+  def self.find_by_address(_address)
+    prot, addr = _address.split("://")
+    IP.new(address: addr, protocol: prot).find
   end
 end
 
