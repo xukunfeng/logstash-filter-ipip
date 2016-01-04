@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
 
   # Files
   #s.files = `git ls-files`.split($\)+::Dir.glob('vendor/*')
-  s.files = Dir['lib/**/*','spec/**/*',*.gemspec','*.md','CONTRIBUTORS','Gemfile','LICENSE','NOTICE.TXT']
+  s.files = Dir['lib/**/*','spec/**/*','*.gemspec','*.md','CONTRIBUTORS','Gemfile','LICENSE','NOTICE.TXT']
 
 
    # Tests
