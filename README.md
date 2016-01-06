@@ -18,7 +18,27 @@ path 根据自己的实际情况配置
 ```
 bin/plugin install --no-verify
 ```
-完成
+# 使用
+
+在配置文件中添加：
+```
+filter {
+    ipip {
+                source => "remote_addr"
+                target => "ipip"
+        }
+}
+```
+remote_addr 存放的是ip，根据自己的情况修改
+
+在输出的中，会增加以下字段：
+```
+"ipip": {
+      "country": "中国",
+      "province": "福建",
+      "city": "漳州"
+    }
+```
 
 #注意事项
 ipip 的数据库位于 logstash-filter-ipip/lib/logstash/filters/data 目录，可以定时从ipip.net 上下载更新
