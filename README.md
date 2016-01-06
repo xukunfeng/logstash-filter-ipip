@@ -5,16 +5,17 @@
 适配于 https://www.ipip.net/ 的免费版数据库
 
 # 安装
-1.  下载插件文件夹
+1.下载插件文件夹
 ```shell
 git clone https://github.com/xukunfeng/logstash-filter-ipip 
 ```
-2. 修改logstash 安装目录下的Gemfile文件，添加一行：
+2.修改logstash 安装目录下的Gemfile文件，添加一行：
 ```
 gem "logstash-filter-ipip", "0.1.1", :path => "plugin/logstash-filter-ipip/logstash-filter-ipip"
 ```
 path 根据自己的实际情况配置
-3. 在logstash的安装目录执行安装命令
+
+3.在logstash的安装目录执行安装命令
 ```
 bin/plugin install --no-verify
 ```
